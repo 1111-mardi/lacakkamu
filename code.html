@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pelacak Lokasi</title>
+<!-- Leaflet CSS -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-sA+g2GwFBM/1Yk+Cxyf/7hhxjfmd6TkXDyx6q1Zjzuc="
+  crossorigin=""
+/>
+<style>
+  /* Reset & base */
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  header {
+    padding: 1rem 2rem;
+    background: rgba(0,0,0,0.3);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    text-align: center;
+  }
+  header h1 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 2rem;
+    letter-spacing: 1.4px;
+  }
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 1.5rem;
+  }
+  #info {
+    background: rgba(0,0,0,0.3);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    max-width: 380px;
+    margin-bottom: 8px;
+  }
+  #info p {
+    margin: 0.3rem 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+  #status {
+    font-size: 1rem;
+    font-weight: 400;
+    color: #ccc;
+  }
+  #map {
+    flex: 1;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    margin-top: 0.5rem;
+  }
+  footer {
+    text-align: center;
+    padding: 0.6rem;
+    font-size: 0.9rem;
+    color: #eee;
+    background: rgba(0,0,0,0.2);
+  }
+  /* Responsive */
+  @media (max-width: 480px) {
+    header h1 {
+      font-size: 1.5rem;
+    }
+    #info {
+      max-width: 100%;
+      padding: 0.8rem 1rem;
+    }
+    #info p {
+      font-size: 1rem;
+    }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pelacak Lokasi</h1>
+</header>
+<main>
+  <div id="info">
+    <p><strong>Latitude:</strong> <span id="lat">-</span></p>
+    <p><strong>Longitude:</strong> <span id="lng">-</span></p>
+    <p id="status">Menunggu izin lokasi...</p>
+  </div>
+  <div id="map" style="height: 100%; min-height: 300px;"></div>
+</main>
+<footer>© 2024 Pelacak Lokasi - Menggunakan Geolocation API dan OpenStreetMap</footer>
+
+<!-- Leaflet JS -->
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-oCMZ6G3AtGmCgmCmHZQzFRFttz9b6b2hpAvaU9s+lz0="
+  crossorigin=""
+></script>
+<script>
+  const statusEl = document.getElementById('status');
+  const latEl = document.getElementById('lat');
+  const lngEl = document.getElementById('lng');
+
+  // Initialize map and marker with default location (0,0)
+  const map = L.map('map').setView([0, 0], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(map);
+
+  let marker = L.marker([0, 0]).addTo(map);
+
+  function updatePosition(position) {
+    const lat = position.coords.latitude.toFixed(6);
+    const lng = position.coords.longitude.toFixed(6);
+
+    latEl.textContent = lat;
+    lngEl.textContent = lng;
+    statusEl.textContent = 'Lokasi ditemukan dan sedang dilacak.';
+
+    marker.setLatLng([lat, lng]);
+    map.setView([lat, lng], 15);
+  }
+
+  function errorHandler(err) {
+    switch(err.code) {
+      case err.PERMISSION_DENIED:
+        statusEl.textContent = "Izin lokasi ditolak oleh pengguna.";
+        break;
+      case err.POSITION_UNAVAILABLE:
+        statusEl.textContent = "Informasi lokasi tidak tersedia.";
+        break;
+      case err.TIMEOUT:
+        statusEl.textContent = "Permintaan lokasi memakan waktu terlalu lama.";
+        break;
+      default:
+        statusEl.textContent = "Terjadi kesalahan saat mengambil lokasi.";
+        break;
+    }
+  }
+
+  function startTracking() {
+    if (!navigator.geolocation) {
+      statusEl.textContent = 'Geolokasi tidak didukung oleh browser ini.';
+      return;
+    }
+    statusEl.textContent = 'Mencari lokasi...';
+    navigator.geolocation.watchPosition(updatePosition, errorHandler, {
+      enableHighAccuracy: true,
+      maximumAge: 5000,
+      timeout: 10000
+    });
+  }
+
+  // Start tracking location when page loads
+  window.onload = startTracking;
+</script>
+</body>
+</html>
+
